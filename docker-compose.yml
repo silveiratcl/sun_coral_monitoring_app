@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+   api:
+      build:
+         context: .
+         dockerfile: Dockerfile.dev
+      command: #>
+         sh -c "python manage.py migrate &&
+                python manage.py runserver 0.0.0.0:8000"
+         #sh -c "python manage.py wait_for_db &&
+          #      python manage.py migrate &&
+          #      python manage.py runserver 0.0.0.0:8000"
+      volumes:
+         - ./app:/app
+         - dev-static-data:/vol/web
+      ports:
+         - 8000:8000 ### ports
+      env_file:
+         - .env
+      restart: "on-failure"
+      depends_on:
+         - postgres-db
+      networks:
+         - monit-api
+
+   postgres-db:
+      image: kartoza/postgis:12.0
+      ports:
+         - "5433:5432"
+      volumes:
+         - postgres_data:/var/lib/postgresql
+      environment:
+         - POSTGRES_USER=${POSTGRES_USER}
+         - POSTGRES_PASS=${POSTGRES_PASS}
+         - POSTGRES_DBNAME=${POSTGRES_DBNAME}
+      restart: "on-failure"
+      networks:
+         - monit-api
+
+   nginx:
+      restart: always
+      depends_on:
+         - api
+      build:
+         context: ./nginx
+         dockerfile: Dockerfile.dev
+      ports:
+         - 8080:80
+      networks:
+         - monit-api
+
+networks:
+   monit-api:
+      driver: bridge
+
+volumes:
+   postgres_data:
+   dev-static-data: #
