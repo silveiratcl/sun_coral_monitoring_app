@@ -27,7 +27,7 @@ services:
    postgres-db:
       image: kartoza/postgis:12.0
       ports:
-         - "5433:5432"
+         - 5432:5432
       volumes:
          - postgres_data:/var/lib/postgresql
       environment:
